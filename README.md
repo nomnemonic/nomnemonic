@@ -1,6 +1,6 @@
 # no mnemonic
 
-[![Build Status](https://travis-ci.org/nomnemonic/nomnemonic.svg?branch=main)](https://travis-ci.org/nomnemonic/nomnemonic)
+[![Build Status](https://travis-ci.com/nomnemonic/nomnemonic.svg?branch=main)](https://travis-ci.com/github/nomnemonic/nomnemonic)
 [![Coverage Status](https://coveralls.io/repos/github/nomnemonic/nomnemonic/badge.svg?branch=main)](https://coveralls.io/github/nomnemonic/nomnemonic?branch=main)
 [![Go Report Card](https://goreportcard.com/badge/github.com/nomnemonic/nomnemonic)](https://goreportcard.com/report/github.com/nomnemonic/nomnemonic)
 [![GoDoc](https://godoc.org/github.com/nomnemonic/nomnemonic?status.svg)](https://godoc.org/github.com/nomnemonic/nomnemonic)
