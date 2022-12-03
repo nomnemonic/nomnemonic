@@ -25,7 +25,7 @@ This guide introduces a deterministic and cryptographic way to re-generate bip39
 
 `seed = "<identifier>:<password>|<passcode>"`
 
-`dk = pbkdf2.Key(seed, "password"+password), 4096, 32, sha512.New)`
+`dk = pbkdf2.Key(seed, "password"+password, 4096, 32, sha512.New)`
 
 `encrypted = aes.NewCipher(dk).Encrypt(seed)`
 
