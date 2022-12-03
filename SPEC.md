@@ -4,7 +4,7 @@
 
 `nomnemonic` is a deterministic mnemonic generator that uses 3 inputs and cryptography to generate a mnemonic sentence.
 
-Algorithm version: 1.0.0
+Algorithm version: 2.0.0
 
 ## Motivation
 
@@ -17,15 +17,19 @@ This guide introduces a deterministic and cryptographic way to re-generate bip39
 ## User inputs
 
 * `identifier` is an identifier like username/email/phone/etc... that can be at at least 2 chars is a must for decreasing the probability of predictability
-* `password` is a password (strong password is suggested, at least 8 chars is must)
+* `password` is a password (strong password is suggested, at least 12 chars is must)
 * `passcode` is a 6 digit number which can start with zeros
 * `number_of_words` is an enum type which is valid list of bip39 compatible word sizes 12, 15, 18, 21 and 24
 
 ## Variables
 
-```seed = "<identifier>:<password>|<passcode>"```
+`seed = "<identifier>:<password>|<passcode>"`
 
-```number_of_words = 24 # 12, 15, 18, 21, 24```
+`dk = pbkdf2.Key(seed, "password"+password), 4096, 32, sha512.New)`
+
+`encrypted = aes.NewCipher(dk).Encrypt(seed)`
+
+`number_of_words = 24 # 12, 15, 18, 21, 24`
 
 `strength` is corresponding bit size for the `number_of_words`, the mapping is as below:
 
@@ -42,7 +46,7 @@ This guide introduces a deterministic and cryptographic way to re-generate bip39
 ```
 iterations = number_of_words + (passcode % 32)
 
-entropy32 = sha.Sum256(to_bytes(seed))
+entropy32 = sha.Sum256(encrypted)
 for 0..iterations-1 do
     entropy32 = sha.Sum256(entropy32)
 end

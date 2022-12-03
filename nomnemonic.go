@@ -1,6 +1,7 @@
 package nomnemonic
 
 import (
+	"crypto/aes"
 	"crypto/sha256"
 	"crypto/sha512"
 	"errors"
@@ -15,11 +16,12 @@ const (
 	_bitChunkSizeBip39WordIndex = 11 // bip39 word index is 11 bits
 	_bitChunkSizeEntropy        = 32 // mnemonic must encode entropy in a multiple of 32 bits
 
-	_saltPrefix = "mnemonic"
+	_saltPrefixMnemonic = "mnemonic"
+	_saltPrefixPassword = "password"
 
 	_inputIdentifierMinLength = 2
 	_inputPasscodeLength      = 6
-	_inputPasswordMinLength   = 8
+	_inputPasswordMinLength   = 12
 )
 
 var (
@@ -72,19 +74,28 @@ func New(words []string) (Mnemonicer, error) {
 
 // Generate generates mnemonic words for identifier, password, passcode and size
 func (m *mnemonicer) Generate(identifier, password, passcode string, size int) ([]string, error) {
-	input := []byte(fmt.Sprintf("%s:%s|%s", identifier, password, passcode))
-
 	if len(identifier) < _inputIdentifierMinLength {
-		return nil, errors.New("identifier must be at least 2 chars")
+		return nil, fmt.Errorf("identifier must be at least %d chars", _inputIdentifierMinLength)
 	}
 
 	if len(password) < _inputPasswordMinLength {
-		return nil, errors.New("password must be at least 8 chars")
+		return nil, fmt.Errorf("password must be at least %d chars", _inputPasswordMinLength)
 	}
 
 	if len(passcode) != _inputPasscodeLength {
-		return nil, errors.New("passcode must be 6 digits")
+		return nil, fmt.Errorf("passcode must be %d digits", _inputPasscodeLength)
 	}
+
+	input := []byte(fmt.Sprintf("%s:%s|%s", identifier, password, passcode))
+	dk := pbkdf2.Key([]byte(input), []byte(_saltPrefixPassword+password), 4096, 32, sha512.New)
+	c, err := aes.NewCipher(dk)
+	if err != nil {
+		// unreachable code path where dk is always generated as 32 bytes
+		return nil, err
+	}
+
+	encrypted := make([]byte, len(input))
+	c.Encrypt(encrypted, input)
 
 	iterations, err := strconv.Atoi(passcode)
 	if err != nil {
@@ -93,7 +104,7 @@ func (m *mnemonicer) Generate(identifier, password, passcode string, size int) (
 	iterations %= _bitChunkSizeEntropy
 	iterations += size
 
-	entropy32 := sha256.Sum256(input)
+	entropy32 := sha256.Sum256(encrypted)
 	for i := 0; i < iterations-1; i++ {
 		entropy32 = sha256.Sum256(entropy32[:])
 	}
@@ -149,14 +160,14 @@ func (m *mnemonicer) CalculateEntropy(words []string) ([]byte, error) {
 // GenerateSeed generates 64 bytes seed using the mnemonic sentence and
 // passphrase
 func (m *mnemonicer) GenerateSeed(sentence, passphrase string) ([]byte, error) {
-	seed := pbkdf2.Key([]byte(sentence), []byte(_saltPrefix+passphrase), 2048, 64, sha512.New)
+	seed := pbkdf2.Key([]byte(sentence), []byte(_saltPrefixMnemonic+passphrase), 2048, 64, sha512.New)
 	return seed, nil
 }
 
 // GenerateSeed32 generates 32 bytes seed using the mnemonic sentence and
 // passphrase
 func (m *mnemonicer) GenerateSeed32(sentence, passphrase string) ([]byte, error) {
-	seed := pbkdf2.Key([]byte(sentence), []byte(_saltPrefix+passphrase), 4096, 32, sha512.New)
+	seed := pbkdf2.Key([]byte(sentence), []byte(_saltPrefixMnemonic+passphrase), 4096, 32, sha512.New)
 	return seed, nil
 }
 
