@@ -19,8 +19,7 @@ The library is an implementation of the spec which aims to provide an alternativ
 **Cryptography**
 
 * `pbkdf2` with `sha512`
-* `aes256`
-* `sha256.Sum256` (other algorithms can be addable)
+* `scrypt` with `sha256`
 
 **Outputs**
 

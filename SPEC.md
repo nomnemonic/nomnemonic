@@ -4,7 +4,7 @@
 
 `nomnemonic` is a deterministic mnemonic generator that uses 3 inputs and cryptography to generate a mnemonic sentence.
 
-Algorithm version: 2.0.0
+Algorithm version: 3.0.0
 
 ## Motivation
 
@@ -23,13 +23,9 @@ This guide introduces a deterministic and cryptographic way to re-generate bip39
 
 ## Variables
 
-`seed = "<identifier>:<password>|<passcode>"`
-
-`dk = pbkdf2.Key(seed, "password"+password, 4096, 32, sha512.New)`
-
-`encrypted = aes.NewCipher(dk).Encrypt(seed)`
-
 `number_of_words = 24 # 12, 15, 18, 21, 24`
+
+`seed = "<identifier>:<password>|<passcode>=<number_of_words>"`
 
 `strength` is corresponding bit size for the `number_of_words`, the mapping is as below:
 
@@ -44,17 +40,15 @@ This guide introduces a deterministic and cryptographic way to re-generate bip39
 ## Entropy calculation
 
 ```
-iterations = number_of_words + (passcode % 32)
+entropy_size = strength / 8
 
-entropy32 = sha.Sum256(encrypted)
-for 0..iterations-1 do
-    entropy32 = sha.Sum256(entropy32)
+dk_head = pbkdf2.Key(seed, "pwd"+password+"code"+passcode, (1<<18), entropy_size, sha512.New)
+
+dk_tail = scrypt.Key(seed, "pwd"+password+"code"+passcode, (1<<18), 8, 1, entropy_size)
+
+0..entropy_size do
+    entropy[i] = dk_head[i] ^ dk_tail[i]
 end
-
-# either before or after convertion to binary limit the size with strength
-# both would generate the same result
-entropy256 = to_binary(entropy32)
-entropy = entropy256[:strength]
 ```
 
 ## Generating the mnemonic

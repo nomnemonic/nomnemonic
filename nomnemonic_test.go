@@ -56,50 +56,50 @@ func TestGenerate(t *testing.T) {
 	}{
 		{
 			size:       24,
-			identifier: "mnemonicer_test",
+			identifier: "nomnemonic_test",
 			password:   "test12345678",
 			passcode:   "101938",
-			sentence:   "sudden rose stand electric jungle wreck lunch age pride globe okay huge off method stadium fog shock usage payment garbage unfold render home master",
+			sentence:   "dress mule bonus strong village clip volcano public plug fossil travel lobster nerve love gospel dance shove vicious valve else roof observe warrior magic",
 		},
 		{
 			size:       21,
-			identifier: "mnemonicer_test",
+			identifier: "nomnemonic_test",
 			password:   "test12345678",
 			passcode:   "101938",
-			sentence:   "border oxygen mixture question scrap coil farm nose drip sibling prepare diesel license grocery remain ceiling float imitate immune neither lesson",
+			sentence:   "helmet trap peasant popular man busy arch crater spike warm banner before abuse dice govern jealous bread poet shy delay opinion",
 		},
 		{
 			size:       18,
-			identifier: "mnemonicer_test",
+			identifier: "nomnemonic_test",
 			password:   "test12345678",
 			passcode:   "101938",
-			sentence:   "minor require payment learn anger exhibit fringe bean mango old slow chat autumn oyster mean custom alley cannon",
+			sentence:   "loud youth skin earth sunny stone lift february oblige fee minute solve junior solid citizen blossom virtual noise",
 		},
 		{
 			size:       15,
-			identifier: "mnemonicer_test",
+			identifier: "nomnemonic_test",
 			password:   "test12345678",
 			passcode:   "101938",
-			sentence:   "pull latin volume hole coil ozone east service flight wife sister slab drip monkey ignore",
+			sentence:   "scan labor slice similar party face cliff private siren narrow uncover reason staff pulp anchor",
 		},
 		{
 			size:       12,
-			identifier: "mnemonicer_test",
+			identifier: "nomnemonic_test",
 			password:   "test12345678",
 			passcode:   "101938",
-			sentence:   "rail aim prize inner case fence anger fly concert basket cherry uncle",
+			sentence:   "cinnamon venue broken old brass vague paddle unaware critic alarm consider hobby",
 		},
 		{
 			size:       12,
 			identifier: "te",             // min size identifier
 			password:   "paSZW0rD!.1234", // >=12 size password
 			passcode:   "101938",         // 6 digit passcode
-			sentence:   "ordinary weasel please rebel try machine night scissors traffic hero upper slow",
+			sentence:   "clap acid hawk fox sock someone segment pole tissue own depth pioneer",
 		},
 		// validations
 		{
 			size:       11,
-			identifier: "mnemonicer_test",
+			identifier: "nomnemonic_test",
 			password:   "test12345678",
 			passcode:   "101938",
 			err:        errors.New("unsupported strength: 0"),
@@ -162,7 +162,7 @@ func TestGenerate(t *testing.T) {
 
 		// on expected error fail
 		if test.err != nil && err == nil {
-			t.Errorf("expected err for size %d but actual nil", test.size)
+			t.Errorf("expected err(%s) for size %d but actual nil", test.err.Error(), test.size)
 		}
 
 		// on expected errors, compare the error string

@@ -1,7 +1,6 @@
 package nomnemonic
 
 import (
-	"crypto/aes"
 	"crypto/sha256"
 	"crypto/sha512"
 	"errors"
@@ -9,6 +8,7 @@ import (
 	"strconv"
 
 	"golang.org/x/crypto/pbkdf2"
+	"golang.org/x/crypto/scrypt"
 )
 
 const (
@@ -17,11 +17,15 @@ const (
 	_bitChunkSizeEntropy        = 32 // mnemonic must encode entropy in a multiple of 32 bits
 
 	_saltPrefixMnemonic = "mnemonic"
-	_saltPrefixPassword = "password"
+	_saltPrefixPassword = "pwd"
+	_saltPrefixPasscode = "code"
 
 	_inputIdentifierMinLength = 2
 	_inputPasscodeLength      = 6
 	_inputPasswordMinLength   = 12
+
+	Version          = "0.3.0"
+	VersionAlgorithm = "3.0.0"
 )
 
 var (
@@ -86,27 +90,9 @@ func (m *mnemonicer) Generate(identifier, password, passcode string, size int) (
 		return nil, fmt.Errorf("passcode must be %d digits", _inputPasscodeLength)
 	}
 
-	input := []byte(fmt.Sprintf("%s:%s|%s", identifier, password, passcode))
-	dk := pbkdf2.Key([]byte(input), []byte(_saltPrefixPassword+password), 4096, 32, sha512.New)
-	c, err := aes.NewCipher(dk)
-	if err != nil {
-		// unreachable code path where dk is always generated as 32 bytes
-		return nil, err
-	}
-
-	encrypted := make([]byte, len(input))
-	c.Encrypt(encrypted, input)
-
-	iterations, err := strconv.Atoi(passcode)
+	_, err := strconv.Atoi(passcode)
 	if err != nil {
 		return nil, fmt.Errorf("passcode must be numeric but given '%s'", passcode)
-	}
-	iterations %= _bitChunkSizeEntropy
-	iterations += size
-
-	entropy32 := sha256.Sum256(encrypted)
-	for i := 0; i < iterations-1; i++ {
-		entropy32 = sha256.Sum256(entropy32[:])
 	}
 
 	strength := _sentenceStrengths[size]
@@ -115,14 +101,33 @@ func (m *mnemonicer) Generate(identifier, password, passcode string, size int) (
 		return nil, err
 	}
 
+	input := []byte(fmt.Sprintf("%s:%s|%s=%d", identifier, password, passcode, size))
 	entropySize := strength / _bitChunkSizeOneByte
-	csSize := strength / _bitChunkSizeEntropy
-	mnemonicSize := (strength + csSize) / _bitChunkSizeBip39WordIndex
+	dkHead := pbkdf2.Key(
+		[]byte(input),
+		[]byte(_saltPrefixPassword+password+_saltPrefixPasscode+passcode),
+		(1 << 18),
+		entropySize,
+		sha512.New,
+	)
+	dkTail, _ := scrypt.Key(
+		[]byte(input),
+		[]byte(_saltPrefixPassword+password+_saltPrefixPasscode+passcode),
+		(1 << 18),
+		8,
+		1,
+		entropySize,
+	)
 
-	entropy := entropy32[:entropySize]
+	entropy := make([]byte, entropySize)
+	for i := 0; i < entropySize; i++ {
+		entropy[i] = dkHead[i] ^ dkTail[i]
+	}
 	bins := bytesToBin(entropy)
 
 	// get word indexes
+	csSize := strength / _bitChunkSizeEntropy
+	mnemonicSize := (strength + csSize) / _bitChunkSizeBip39WordIndex
 	prefixSize := _bitChunkSizeBip39WordIndex - csSize
 	wordIndexes := chunkSplit(bins[:strength-prefixSize], _bitChunkSizeBip39WordIndex)
 	words := make([]string, mnemonicSize)
