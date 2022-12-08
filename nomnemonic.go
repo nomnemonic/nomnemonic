@@ -104,14 +104,14 @@ func (m *mnemonicer) Generate(identifier, password, passcode string, size int) (
 	input := []byte(fmt.Sprintf("%s:%s|%s=%d", identifier, password, passcode, size))
 	entropySize := strength / _bitChunkSizeOneByte
 	dkHead := pbkdf2.Key(
-		[]byte(input),
+		input,
 		[]byte(_saltPrefixPassword+password+_saltPrefixPasscode+passcode),
 		(1 << 18),
 		entropySize,
 		sha512.New,
 	)
 	dkTail, _ := scrypt.Key(
-		[]byte(input),
+		input,
 		[]byte(_saltPrefixPassword+password+_saltPrefixPasscode+passcode),
 		(1 << 18),
 		8,
